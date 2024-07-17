@@ -1,0 +1,67 @@
+{
+  "name": "freefri/cake-rest-api-oauth",
+  "description": "Basic OAuth based on cake-rest-api",
+  "license": "MIT",
+  "type": "cakephp-plugin",
+  "keywords": [
+    "cakephp",
+    "rest",
+    "api",
+    "oauth"
+  ],
+  "authors": [
+    {
+      "name": "Freefri",
+      "homepage": "https://github.com/freefri",
+      "role": "Author"
+    },
+    {
+      "name": "Community",
+      "homepage": "https://github.com/freefri/cake-rest-api-oauth/graphs/contributors"
+    }
+  ],
+  "homepage": "https://github.com/freefri/cake-rest-api-oauth",
+  "support": {
+    "issues": "https://github.com/freefri/cake-rest-api-oauth/issues",
+    "source": "https://github.com/freefri/cake-rest-api-oauth"
+  },
+  "require": {
+    "php": ">=7.4",
+    "ext-mbstring": "*",
+    "ext-json": "*",
+    "cakephp/cakephp": "^4.4",
+    "cakephp/migrations": "^3.2",
+    "freefri/cake-rest-api": "^0.5.14",
+    "eduplex-api/cake-api-swagger": "^0.1.4",
+    "bshaffer/oauth2-server-php": "~1.14",
+    "composer/composer": "^2.0"
+  },
+  "require-dev": {
+    "cakephp/cakephp-codesniffer": "4.*",
+    "freefri/cake-rest-api-fake-app": "^0.1.2",
+    "phpunit/phpunit": "~8.5.0 || ^9.3 || ^10.1"
+  },
+  "suggest": {
+    "phpstan/phpstan": "PHPStan focuses on finding errors in your code without actually running it. It catches whole classes of bugs even before you write tests for the code."
+  },
+  "autoload": {
+    "psr-4": {
+      "RestOauth\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "RestOauth\\Test\\": "tests/",
+      "App\\Test\\": "vendor/freefri/cake-rest-api-fake-app/tests/",
+      "Cake\\Test\\": "vendor/cakephp/cakephp/tests/"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": false
+    }
+  },
+  "scripts": {
+    "test": "phpunit --colors=always"
+  }
+}
