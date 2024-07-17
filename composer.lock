@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a10669705c20db5821c2456f3581c08e",
+    "content-hash": "7214f4ab1c44111c69bb857c78fbe930",
     "packages": [
         {
             "name": "bshaffer/oauth2-server-php",
@@ -3506,16 +3506,16 @@
         },
         {
             "name": "freefri/cake-rest-api-fake-app",
-            "version": "0.1.3",
+            "version": "0.1.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/freefri/cake-rest-api-fake-app.git",
-                "reference": "20331ef4152f3e85a7b8637ee8ac026c7f2f3f62"
+                "reference": "c24e9708d3975b0041ff124d8c5ffa7db1d1b8af"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/freefri/cake-rest-api-fake-app/zipball/20331ef4152f3e85a7b8637ee8ac026c7f2f3f62",
-                "reference": "20331ef4152f3e85a7b8637ee8ac026c7f2f3f62",
+                "url": "https://api.github.com/repos/freefri/cake-rest-api-fake-app/zipball/c24e9708d3975b0041ff124d8c5ffa7db1d1b8af",
+                "reference": "c24e9708d3975b0041ff124d8c5ffa7db1d1b8af",
                 "shasum": ""
             },
             "require": {
@@ -3538,9 +3538,9 @@
             "description": "Companion fake app for freefri/cake-rest-api",
             "support": {
                 "issues": "https://github.com/freefri/cake-rest-api-fake-app/issues",
-                "source": "https://github.com/freefri/cake-rest-api-fake-app/tree/0.1.3"
+                "source": "https://github.com/freefri/cake-rest-api-fake-app/tree/0.1.4"
             },
-            "time": "2024-06-21T11:37:58+00:00"
+            "time": "2024-07-17T11:34:10+00:00"
         },
         {
             "name": "myclabs/deep-copy",
