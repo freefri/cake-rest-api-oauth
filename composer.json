@@ -31,7 +31,7 @@
     "ext-json": "*",
     "cakephp/cakephp": "^4.4",
     "cakephp/migrations": "^3.2",
-    "freefri/cake-rest-api": "^0.5.14",
+    "freefri/cake-rest-api": "^0.5.15",
     "eduplex-api/cake-api-swagger": "^0.1.4",
     "bshaffer/oauth2-server-php": "~1.14",
     "composer/composer": "^2.0"
