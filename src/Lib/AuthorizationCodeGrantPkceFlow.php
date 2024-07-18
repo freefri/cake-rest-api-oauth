@@ -5,9 +5,11 @@ declare(strict_types = 1);
 namespace RestOauth\Lib;
 
 use Cake\Http\Exception\BadRequestException;
+use Cake\Http\Exception\UnauthorizedException;
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
 use OAuth2\ResponseType\AuthorizationCode;
+use RestApi\Lib\Exception\DetailedException;
 use RestApi\Lib\Helpers\CookieHelper;
 use RestApi\Model\Table\OauthAccessTokensTable;
 
@@ -16,6 +18,12 @@ class AuthorizationCodeGrantPkceFlow
     public static function codeChallengeMethod(): string
     {
         return 'S256';
+    }
+
+    public function buildUrl(string $domain, string $path, array $queryParams): string
+    {
+        $sep = str_contains($path, '?') ? '&' : '?';
+        return $domain . $path . $sep . http_build_query($queryParams);
     }
 
     public function getLoginChallenge(ServerRequest $request): string
@@ -52,7 +60,42 @@ class AuthorizationCodeGrantPkceFlow
         return $cookie->read();
     }
 
-    public function loginWithPassword(
+    public function loginWithPasswordToRedirect(
+        array $data,
+        CookieHelper $CookieHelper,
+        Response $response,
+        OauthAccessTokensTable $OauthTable
+    ): array {
+        if (!$data['login_challenge'] ?? null) {
+            throw new DetailedException('Missing required parameter "login_challenge"');
+        }
+        try {
+            /** @var Response $response */
+            list($response, $return) = $this->loginWithPasswordToArray($data, $CookieHelper, $response, $OauthTable);
+            $params = [
+                'state' => $return['state'],
+                'code' => $return['code'],
+            ];
+            return [$response, $this->buildUrl($this->_getRedirectUri($return['redirect_uri']), '', $params)];
+        } catch (UnauthorizedException $e) {
+            $params = [
+                'code' => $e->getCode(),
+                'error' => 'invalid_grant',
+                'error_description' => 'Invalid username and password'
+            ];
+        } catch (DetailedException $e) {
+            $params = [
+                'code' => $e->getCode(),
+                'error' => 'invalid_request',
+                'error_description' => $e->getMessage()
+            ];
+            throw $e;
+        }
+        $challenge = $CookieHelper->decryptLoginChallenge(urldecode($data['login_challenge']));
+        return [$response, $this->buildUrl($this->_getRedirectUri($challenge['redirect']), '', $params)];
+    }
+
+    public function loginWithPasswordToArray(
         array $data,
         CookieHelper $CookieHelper,
         Response $response,
@@ -95,7 +138,7 @@ class AuthorizationCodeGrantPkceFlow
         $redirectUri = '';
         $state = null;
         if ($data['login_challenge'] ?? null) {
-            $challenge = $CookieHelper->decryptLoginChallenge($data['login_challenge']);
+            $challenge = $CookieHelper->decryptLoginChallenge(urldecode($data['login_challenge']));
             $redirectUri = $challenge['redirect'];
             $state = $challenge['state'] ?? null;
             $newCookie = ['challenge' => $challenge['challenge']];
@@ -160,5 +203,14 @@ class AuthorizationCodeGrantPkceFlow
         if (!$clientId) {
             throw new BadRequestException('Client id is mandatory');
         }
+    }
+
+    private function _getRedirectUri($redirect_uri)
+    {
+        $url = $redirect_uri;
+        if (!$url) {
+            $url = env('HTTP_REFERER');
+        }
+        return $url;
     }
 }

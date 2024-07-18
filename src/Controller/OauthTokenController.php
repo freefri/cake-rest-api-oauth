@@ -55,8 +55,15 @@ class OauthTokenController extends ApiController
         switch ($data['grant_type'] ?? null) {
             case 'password':
                 $this->_logoutCookie();
-                list($this->response, $this->return) = $AuthorizationFlow->loginWithPassword(
-                    $data, $this->CookieHelper, $this->response, $this->OauthAccessTokens);
+                $acceptHeader = $this->getRequest()->getHeader('Accept')[0] ?? '';
+                if ($acceptHeader === 'application/json') {
+                    list($this->response, $this->return) = $AuthorizationFlow->loginWithPasswordToArray(
+                        $data, $this->CookieHelper, $this->response, $this->OauthAccessTokens);
+                } else {
+                    list($this->response, $redirect) = $AuthorizationFlow->loginWithPasswordToRedirect(
+                        $data, $this->CookieHelper, $this->response, $this->OauthAccessTokens);
+                    $this->redirect($redirect);
+                }
                 break;
             case 'authorization_code':
                 $this->return = $AuthorizationFlow->authorizationCodePkceFlow(
