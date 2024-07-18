@@ -33,7 +33,6 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
                 'state' => 'mocked_state',
             ]);
         $mockUsersTable = $this->getMockBuilder(UsersTable::class)
-            ->addMethods(['checkLogin'])
             ->getMock();
 
         $uid = 658954;
