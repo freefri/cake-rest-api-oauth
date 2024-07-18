@@ -66,8 +66,7 @@ class OauthTokenController extends ApiController
                 }
                 break;
             case 'authorization_code':
-                $this->return = $AuthorizationFlow->authorizationCodePkceFlow(
-                    $data, $this->CookieHelper, $this->getRequest(), $this->OauthAccessTokens);
+                $this->return = $AuthorizationFlow->authorizationCodePkceFlow($data, $this->OauthAccessTokens);
                 break;
             default:
                 throw new BadRequestException('Invalid grant_type');

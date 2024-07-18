@@ -64,6 +64,7 @@ class OauthTokenControllerTest extends ApiCommonErrorsTest
             'remember_me' => true,
         ];
 
+        $this->configRequest(['headers' => ['Accept' => 'application/json']]);
         $this->post($this->_getEndpoint(), $data);
 
         $this->assertJsonResponseOK();
@@ -100,15 +101,12 @@ class OauthTokenControllerTest extends ApiCommonErrorsTest
             'redirect_uri' => self::REDIRECT_URL,
             'scope' => 'offline_access'
         ];
+        $codeChallenge = hash('sha256', $data['code_verifier']);
         OauthAccessTokensTable::load()
             ->setAuthorizationCode(
                 $data['code'], $data['client_id'], 50, $data['redirect_uri'],
-                time() + 30, 'something offline_access');
+                time() + 30, 'something offline_access', null, $codeChallenge);
         $mock = $this->createMock(CookieHelper::class);
-        $mock->expects($this->once())->method('popLoginChallenge')
-            ->willReturn([
-                'challenge' => hash('sha256', $data['code_verifier'])
-            ]);
         $this->mockService(CookieHelper::class, function () use ($mock) {
             return $mock;
         });

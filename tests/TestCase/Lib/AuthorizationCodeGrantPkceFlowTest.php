@@ -49,7 +49,7 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
         $response = new Response();
 
         $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow();
-        list($response, $token) = $AuthorizationFlow->loginWithPassword($data, $mockCookieHelper, $response, $mockOauthTable);
+        list($response, $token) = $AuthorizationFlow->loginWithPasswordToArray($data, $mockCookieHelper, $response, $mockOauthTable);
 
         $this->assertEquals('mocked_access_token', $token['access_token']);
         $this->assertEquals('7200', $token['expires_in'], 'expires in seconds');
@@ -69,13 +69,6 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
             'scope' => 'offline_access'
         ];
 
-        $mockCookieHelper = $this->createMock(CookieHelper::class);
-        $mockCookieHelper->expects($this->once())->method('popLoginChallenge')
-            ->willReturn([
-                'challenge' => hash('sha256', $data['code_verifier']),
-                'redirect' => 'mocked_redirect',
-                'state' => 'mocked_state',
-            ]);
         $uid = 556888;
         $mockOauthTable = $this->createMock(OauthAccessTokensTable::class);
         $mockOauthTable->expects($this->once())->method('createBearerToken')
@@ -87,12 +80,12 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
                 'user_id' => $uid,
                 'redirect_uri' => $data['redirect_uri'],
                 'client_id' => $data['client_id'],
+                'code_challenge' => 'b0e18bba920958598927dd997476f346e0e19d0b50aa1c420b99624c57aa176b',
                 'scope' => 'something offline_access else'
             ]);
-        $request = new ServerRequest();
 
         $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow();
-        $token = $AuthorizationFlow->authorizationCodePkceFlow($data, $mockCookieHelper, $request, $mockOauthTable);
+        $token = $AuthorizationFlow->authorizationCodePkceFlow($data, $mockOauthTable);
 
         $expected = [
             'access_token' => 'mocked_access_token',

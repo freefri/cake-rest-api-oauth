@@ -66,7 +66,7 @@ class AuthorizationCodeGrantPkceFlow
         Response $response,
         OauthAccessTokensTable $OauthTable
     ): array {
-        if (!$data['login_challenge'] ?? null) {
+        if (!($data['login_challenge'] ?? null)) {
             throw new DetailedException('Missing required parameter "login_challenge"');
         }
         try {
@@ -79,13 +79,13 @@ class AuthorizationCodeGrantPkceFlow
             return [$response, $this->buildUrl($this->_getRedirectUri($return['redirect_uri']), '', $params)];
         } catch (UnauthorizedException $e) {
             $params = [
-                'code' => $e->getCode(),
+                'error_status' => $e->getCode(),
                 'error' => 'invalid_grant',
                 'error_description' => 'Invalid username and password'
             ];
         } catch (DetailedException $e) {
             $params = [
-                'code' => $e->getCode(),
+                'error_status' => $e->getCode(),
                 'error' => 'invalid_request',
                 'error_description' => $e->getMessage()
             ];
@@ -110,8 +110,8 @@ class AuthorizationCodeGrantPkceFlow
         $cookie = $CookieHelper
             ->writeApi2Remember($token['access_token'], $token['expires_in']);
         $response = $response->withCookie($cookie);
-        list($response, $authorizationCode) = $this->getAuthorizationCode(
-            $data, $CookieHelper, $response, $OauthTable, $usr->id);
+        $authorizationCode = $this->getAuthorizationCode(
+            $data, $CookieHelper, $OauthTable, $usr->id);
         return [$response, array_merge($token, $authorizationCode)];
     }
 
@@ -129,26 +129,24 @@ class AuthorizationCodeGrantPkceFlow
     protected function getAuthorizationCode(
         array $data,
         CookieHelper $CookieHelper,
-        Response $response,
         OauthAccessTokensTable $OauthTable,
         $uid
     ): array {
         $clientId = $data['client_id'];
         $this->_validateClientId($clientId);
         $redirectUri = '';
+        $codeChallenge = null;
         $state = null;
         if ($data['login_challenge'] ?? null) {
             $challenge = $CookieHelper->decryptLoginChallenge(urldecode($data['login_challenge']));
             $redirectUri = $challenge['redirect'];
             $state = $challenge['state'] ?? null;
-            $newCookie = ['challenge' => $challenge['challenge']];
-            $cookieChallenge = $CookieHelper->writeLoginChallenge($newCookie);
-            $response = $response->withCookie($cookieChallenge);
+            $codeChallenge = $challenge['challenge'];
         }
         $challengeMethod = AuthorizationCodeGrantPkceFlow::codeChallengeMethod();
         $AuthorizationCode = new AuthorizationCode($OauthTable);
         $code = $AuthorizationCode->createAuthorizationCode(
-            $clientId, $uid, $redirectUri, $data['scope'] ?? null, $challengeMethod);
+            $clientId, $uid, $redirectUri, $data['scope'] ?? null, $codeChallenge, $challengeMethod);
         $toRet = [
             'code' => $code,
             'redirect_uri' => $redirectUri,
@@ -156,17 +154,13 @@ class AuthorizationCodeGrantPkceFlow
         if ($state) {
             $toRet['state'] = $state;
         }
-        return [$response, $toRet];
+        return $toRet;
     }
 
     public function authorizationCodePkceFlow(
         array $data,
-        CookieHelper $Cookie,
-        ServerRequest $request,
         OauthAccessTokensTable $OauthTable
     ): array {
-        $challengeCookie = $Cookie->popLoginChallenge($request);
-        $codeChallenge = $challengeCookie['challenge'];
         $codeVerifier = $data['code_verifier'] ?? null;
         $clientId = $data['client_id'] ?? '';
         $this->_validateClientId($clientId);
@@ -178,9 +172,10 @@ class AuthorizationCodeGrantPkceFlow
             throw new BadRequestException('Invalid authorization code ' . $authCode);
         }
         $hash = hash('sha256', $codeVerifier);
+        $codeChallenge = $authCode['code_challenge'] ?? null;
         if ($codeChallenge !== $hash) {
             throw new BadRequestException('Code challenge and verifier do not match '
-                . $codeChallenge . ' ' . $hash);
+                . $codeChallenge . ' -> ' . $hash);
         }
         $redirectUri = $data['redirect_uri'] ?? '';
         if ($redirectUri !== ($authCode['redirect_uri'] ?? '')) {
