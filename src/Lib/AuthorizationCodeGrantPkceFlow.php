@@ -33,8 +33,9 @@ class AuthorizationCodeGrantPkceFlow
         if ($codeChallengeMethod !== $this->codeChallengeMethod()) {
             throw new BadRequestException('Only S256 challenge method is allowed');
         }
-        if (!$clientId || !$codeChallenge) {
-            throw new BadRequestException('Required parameter missing client_id or code_challenge');
+        $this->_validateClientId($clientId);
+        if (!$codeChallenge) {
+            throw new BadRequestException('Required parameter missing code_challenge');
         }
         return $this->computeLoginChallenge($codeChallenge, $redirectUri, $state);
     }
@@ -58,9 +59,7 @@ class AuthorizationCodeGrantPkceFlow
         OauthAccessTokensTable $OauthTable
     ): array {
         $clientId = $data['client_id'] ?? false;
-        if (!$clientId) {
-            throw new BadRequestException('Client id is mandatory');
-        }
+        $this->_validateClientId($clientId);
         $usr = $OauthTable->Users->checkLogin($data);
 
         $token = $OauthTable->createBearerToken($usr->id, $clientId, $this->_secsToExpire($data));
@@ -92,6 +91,7 @@ class AuthorizationCodeGrantPkceFlow
         $uid
     ): array {
         $clientId = $data['client_id'];
+        $this->_validateClientId($clientId);
         $redirectUri = '';
         $state = null;
         if ($data['login_challenge'] ?? null) {
@@ -126,7 +126,8 @@ class AuthorizationCodeGrantPkceFlow
         $codeChallenge = $challengeCookie['challenge'];
         $codeVerifier = $data['code_verifier'] ?? null;
         $clientId = $data['client_id'] ?? '';
-        if (!$clientId || !isset($data['code']) || !$codeVerifier) {
+        $this->_validateClientId($clientId);
+        if (!isset($data['code']) || !$codeVerifier) {
             throw new BadRequestException('Mandatory param is missing');
         }
         $authCode = $OauthTable->getAuthorizationCode($data['code']);
@@ -152,5 +153,12 @@ class AuthorizationCodeGrantPkceFlow
             $token['refresh_token'] = null;
         }
         return $token;
+    }
+
+    private function _validateClientId($clientId): void
+    {
+        if (!$clientId) {
+            throw new BadRequestException('Client id is mandatory');
+        }
     }
 }
