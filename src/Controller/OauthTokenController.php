@@ -13,8 +13,8 @@ use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
 use RestApi\Lib\Helpers\CookieHelper;
-use RestApi\Lib\Oauth\AuthorizationCodeGrantPkceFlow;
 use RestApi\Model\Table\OauthAccessTokensTable;
+use RestOauth\Lib\AuthorizationCodeGrantPkceFlow;
 
 /**
  * @property UsersTable $Users
