@@ -12,15 +12,20 @@ use Cake\TestSuite\TestCase;
 use RestApi\Lib\Helpers\CookieHelper;
 use RestApi\Model\Table\OauthAccessTokensTable;
 use RestOauth\Lib\AuthorizationCodeGrantPkceFlow;
+use RestOauth\Test\Fixture\OauthClientsFixture;
 
 class AuthorizationCodeGrantPkceFlowTest extends TestCase
 {
+    protected $fixtures = [
+        OauthClientsFixture::LOAD,
+    ];
+
     private function _loginWithPasswordToArray()
     {
         $data = [
             'username' => 'UsersFixture::EMAIL',
             'password' => 'passpass',
-            'client_id' => 'OauthClientsFixture::DASHBOARD_CLI',
+            'client_id' => OauthClientsFixture::DASHBOARD_CLI,
             'grant_type' => 'password',
             'login_challenge' => 'mocked_OauthTokenControllerTest::LOGIN_CHALLENGE',
             'scope' => 'custom_test_scope',
@@ -41,7 +46,9 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
         $mockUsersTable->expects($this->once())
             ->method('checkLogin')
             ->willReturn((object)['id' => $uid]);
-        $mockOauthTable = $this->createMock(OauthAccessTokensTable::class);
+        $mockOauthTable = $this->getMockBuilder(OauthAccessTokensTable::class)
+            ->onlyMethods(['createBearerToken'])
+            ->getMock();
         $mockOauthTable->expects($this->once())->method('createBearerToken')
             ->willReturn([
                 'access_token' => 'mocked_access_token',
@@ -50,13 +57,24 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
         $mockOauthTable->Users = $mockUsersTable;
         $response = new Response();
 
-        $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow();
-        list($response, $token) = $AuthorizationFlow->loginWithPasswordToArray($data, $mockCookieHelper, $response, $mockOauthTable);
+        $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow($mockOauthTable);
+        list($response, $token) = $AuthorizationFlow->loginWithPasswordToArray($data, $mockCookieHelper, $response);
         return $token;
     }
 
     public function testLoginWithPassword()
     {
+        $token = $this->_loginWithPasswordToArray();
+
+        $this->assertEquals(['code', 'redirect_uri', 'state'], array_keys($token));
+        $this->assertEquals('mocked_redirect', $token['redirect_uri']);
+        $this->assertEquals('mocked_state', $token['state']);
+        $this->assertArrayHasKey('code', $token);
+    }
+
+    public function testLoginWithPassword_notAllowedForClient()
+    {
+
         $token = $this->_loginWithPasswordToArray();
 
         $this->assertEquals(['code', 'redirect_uri', 'state'], array_keys($token));
@@ -83,7 +101,7 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
     {
         $data = [
             'grant_type' => 'authorization_code',
-            'client_id' => 'OauthClientsFixture::DASHBOARD_CLI',
+            'client_id' => OauthClientsFixture::DASHBOARD_CLI,
             'code' => 'fake_test_authorization_code',
             'code_verifier' => 'test_verifier_code',
             'redirect_uri' => 'self::REDIRECT_URL',
@@ -91,7 +109,9 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
         ];
 
         $uid = 556888;
-        $mockOauthTable = $this->createMock(OauthAccessTokensTable::class);
+        $mockOauthTable = $this->getMockBuilder(OauthAccessTokensTable::class)
+            ->onlyMethods(['createBearerToken', 'getAuthorizationCode', 'expireAuthorizationCode'])
+            ->getMock();
         $mockOauthTable->expects($this->once())->method('createBearerToken')
             ->willReturn([
                 'access_token' => 'mocked_access_token',
@@ -105,8 +125,8 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
                 'scope' => 'something offline_access else'
             ]);
 
-        $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow();
-        $token = $AuthorizationFlow->authorizationCodePkceFlow($data, $mockOauthTable);
+        $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow($mockOauthTable);
+        $token = $AuthorizationFlow->authorizationCodePkceFlow($data);
 
         $expected = [
             'access_token' => 'mocked_access_token',

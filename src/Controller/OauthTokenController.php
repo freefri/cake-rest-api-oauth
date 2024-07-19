@@ -46,22 +46,22 @@ class OauthTokenController extends ApiController
 
     protected function addNew($data)
     {
-        $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow();
+        $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow($this->OauthAccessTokens);
         switch ($data['grant_type'] ?? null) {
             case 'password':
                 $this->_logoutCookie();
                 $acceptHeader = $this->getRequest()->getHeader('Accept')[0] ?? '';
                 if ($acceptHeader === 'application/json') {
                     list($this->response, $this->return) = $AuthorizationFlow->loginWithPasswordToArray(
-                        $data, $this->CookieHelper, $this->response, $this->OauthAccessTokens);
+                        $data, $this->CookieHelper, $this->response);
                 } else {
                     list($this->response, $redirect) = $AuthorizationFlow->loginWithPasswordToRedirect(
-                        $data, $this->CookieHelper, $this->response, $this->OauthAccessTokens);
+                        $data, $this->CookieHelper, $this->response);
                     $this->redirect($redirect);
                 }
                 break;
             case 'authorization_code':
-                $this->return = $AuthorizationFlow->authorizationCodePkceFlow($data, $this->OauthAccessTokens);
+                $this->return = $AuthorizationFlow->authorizationCodePkceFlow($data);
                 break;
             default:
                 throw new BadRequestException('Invalid grant_type');

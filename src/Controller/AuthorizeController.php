@@ -7,6 +7,7 @@ namespace RestOauth\Controller;
 use App\Controller\ApiController;
 use Cake\Core\Configure;
 use Cake\Http\Exception\BadRequestException;
+use RestApi\Model\Table\OauthAccessTokensTable;
 use RestOauth\Lib\AuthorizationCodeGrantPkceFlow;
 
 class AuthorizeController extends ApiController
@@ -18,7 +19,7 @@ class AuthorizeController extends ApiController
 
     protected function getList()
     {
-        $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow();
+        $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow(OauthAccessTokensTable::load());
         $queryParams = [
             'login_challenge' => $AuthorizationFlow->getLoginChallenge($this->getRequest()),
         ];

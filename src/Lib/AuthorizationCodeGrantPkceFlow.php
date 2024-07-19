@@ -16,6 +16,13 @@ use RestApi\Model\Table\OauthAccessTokensTable;
 
 class AuthorizationCodeGrantPkceFlow
 {
+    private OauthAccessTokensTable $OauthTable;
+
+    public function __construct(OauthAccessTokensTable $OauthTable)
+    {
+        $this->OauthTable = $OauthTable;
+    }
+
     public static function codeChallengeMethod(): string
     {
         return 'S256';
@@ -50,18 +57,14 @@ class AuthorizationCodeGrantPkceFlow
         return $loginChallenge->computeLoginChallenge();
     }
 
-    public function loginWithPasswordToRedirect(
-        array $data,
-        CookieHelper $CookieHelper,
-        Response $response,
-        OauthAccessTokensTable $OauthTable
-    ): array {
+    public function loginWithPasswordToRedirect(array $data, CookieHelper $CookieHelper, Response $response): array
+    {
         if (!($data['login_challenge'] ?? null)) {
             throw new DetailedException('Missing required parameter "login_challenge"');
         }
         try {
             /** @var Response $response */
-            list($response, $return) = $this->loginWithPasswordToArray($data, $CookieHelper, $response, $OauthTable);
+            list($response, $return) = $this->loginWithPasswordToArray($data, $CookieHelper, $response);
             $params = [
                 'state' => $return['state'],
                 'code' => $return['code'],
@@ -85,23 +88,18 @@ class AuthorizationCodeGrantPkceFlow
         return [$response, $this->buildUrl($this->_getRedirectUri($challenge['redirect']), '', $params)];
     }
 
-    public function loginWithPasswordToArray(
-        array $data,
-        CookieHelper $CookieHelper,
-        Response $response,
-        OauthAccessTokensTable $OauthTable
-    ): array {
+    public function loginWithPasswordToArray(array $data, CookieHelper $CookieHelper, Response $response): array
+    {
         $clientId = $data['client_id'] ?? false;
-        $this->_validateClientId($clientId);
-        $usr = $OauthTable->Users->checkLogin($data);
+        $this->_validateClientId($clientId, $data['grant_type'] ?? null);
+        $usr = $this->OauthTable->Users->checkLogin($data);
 
-        $token = $OauthTable->createBearerToken($usr->id, $clientId, $this->_secsToExpire($data));
+        $token = $this->OauthTable->createBearerToken($usr->id, $clientId, $this->_secsToExpire($data));
 
         $cookie = $CookieHelper
             ->writeApi2Remember($token['access_token'], $token['expires_in']);
         $response = $response->withCookie($cookie);
-        $authorizationCode = $this->getAuthorizationCode(
-            $data, $CookieHelper, $OauthTable, $usr->id);
+        $authorizationCode = $this->getAuthorizationCode($data, $CookieHelper, $usr->id);
         if (Configure::read('RestOauthPlugin.tokenDirectlyFromPasswordGrant')) {
             // it is insecure to return the auth $token directly here (only the $authorizationCode)
             $toRet = array_merge($token, $authorizationCode);
@@ -122,14 +120,10 @@ class AuthorizationCodeGrantPkceFlow
         }
     }
 
-    protected function getAuthorizationCode(
-        array $data,
-        CookieHelper $CookieHelper,
-        OauthAccessTokensTable $OauthTable,
-        $uid
-    ): array {
+    protected function getAuthorizationCode(array $data, CookieHelper $CookieHelper, $uid): array
+    {
         $clientId = $data['client_id'];
-        $this->_validateClientId($clientId);
+        $this->_validateClientId($clientId, $data['grant_type'] ?? null);
         $redirectUri = '';
         $codeChallenge = null;
         $state = null;
@@ -140,7 +134,7 @@ class AuthorizationCodeGrantPkceFlow
             $codeChallenge = $challenge['challenge'];
         }
         $challengeMethod = AuthorizationCodeGrantPkceFlow::codeChallengeMethod();
-        $AuthorizationCode = new AuthorizationCode($OauthTable);
+        $AuthorizationCode = new AuthorizationCode($this->OauthTable);
         $code = $AuthorizationCode->createAuthorizationCode(
             $clientId, $uid, $redirectUri, $data['scope'] ?? null, $codeChallenge, $challengeMethod);
         $toRet = [
@@ -153,18 +147,16 @@ class AuthorizationCodeGrantPkceFlow
         return $toRet;
     }
 
-    public function authorizationCodePkceFlow(
-        array $data,
-        OauthAccessTokensTable $OauthTable
-    ): array {
+    public function authorizationCodePkceFlow(array $data): array
+    {
         $codeVerifier = $data['code_verifier'] ?? null;
         $clientId = $data['client_id'] ?? '';
-        $this->_validateClientId($clientId);
+        $this->_validateClientId($clientId, $data['grant_type'] ?? null);
         if (!isset($data['code']) || !$codeVerifier) {
             throw new BadRequestException('Mandatory param is missing');
         }
-        $authCode = $OauthTable->getAuthorizationCode($data['code']);
-        $OauthTable->expireAuthorizationCode($data['code']);
+        $authCode = $this->OauthTable->getAuthorizationCode($data['code']);
+        $this->OauthTable->expireAuthorizationCode($data['code']);
         if (!$authCode) {
             throw new BadRequestException('Invalid authorization code ' . $authCode);
         }
@@ -182,18 +174,28 @@ class AuthorizationCodeGrantPkceFlow
             throw new BadRequestException('Client ID must be the same');
         }
 
-        $token = $OauthTable->createBearerToken($authCode['user_id'], $clientId, $this->_secsToExpire($data));
-        $OauthTable->expireAuthorizationCode($data['code']);
+        $token = $this->OauthTable->createBearerToken($authCode['user_id'], $clientId, $this->_secsToExpire($data));
+        $this->OauthTable->expireAuthorizationCode($data['code']);
         if (str_contains($authCode['scope'] ?? null, 'offline_access')) {
             $token['refresh_token'] = null;
         }
         return $token;
     }
 
-    private function _validateClientId($clientId): void
+    private function _validateClientId($clientId, string $grantType = null): void
     {
         if (!$clientId) {
             throw new BadRequestException('Client id is mandatory');
+        }
+        $client = $this->OauthTable->getClientDetails($clientId);
+        if (!$client) {
+            throw new BadRequestException('Invalid client_id ' . $clientId);
+        }
+        $grantTypes = $client['grant_types'] ?? null;
+        if ($grantTypes !== null && $grantType !== null) {
+            if (!str_contains($grantTypes, $grantType)) {
+                throw new BadRequestException('The client_id does not allow this grant_type');
+            }
         }
     }
 
