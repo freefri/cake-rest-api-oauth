@@ -3,6 +3,11 @@ Basic OAuth based on cake-rest-api
 
 ## Authentication flow
 
+### Authorization Code Flow with Proof Key for Code Exchange (PKCE)
+
+Based on docs from [auth0](https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow-with-pkce)
+and [oauth demo](https://www.oauth.com/playground/authorization-code-with-pkce.html)
+
 ```mermaid
 sequenceDiagram
     title Authorization Code Flow with Proof Key for Code Exchange (PKCE)
