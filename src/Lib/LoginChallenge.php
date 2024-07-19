@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace RestOauth\Lib;
 
 use Cake\I18n\FrozenTime;

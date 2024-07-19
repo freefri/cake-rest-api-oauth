@@ -120,10 +120,10 @@ class AuthorizationCodeGrantPkceFlow
         }
     }
 
-    protected function getAuthorizationCode(array $data, CookieHelper $CookieHelper, $uid): array
+    public function getAuthorizationCode(array $data, CookieHelper $CookieHelper, $uid): array
     {
         $clientId = $data['client_id'];
-        $this->_validateClientId($clientId, $data['grant_type'] ?? null);
+        $this->_validateClientId($clientId, 'authorization_code');
         $redirectUri = '';
         $codeChallenge = null;
         $state = null;
@@ -147,7 +147,7 @@ class AuthorizationCodeGrantPkceFlow
         return $toRet;
     }
 
-    public static function verifyChallenge(string $codeVerifier): string
+    public function verifyChallenge(string $codeVerifier): string
     {
         return strtr(rtrim(base64_encode(hash('sha256', $codeVerifier, true)), '='), '+/', '-_');
     }
@@ -163,7 +163,7 @@ class AuthorizationCodeGrantPkceFlow
         $authCode = $this->OauthTable->getAuthorizationCode($data['code']);
         $this->OauthTable->expireAuthorizationCode($data['code']);
         if (!$authCode) {
-            throw new BadRequestException('Invalid authorization code ' . $data['code']);
+            throw new BadRequestException('Invalid authorization code ' . $data['code'] . ' -> ' . $authCode);
         }
         $storedCodeChallenge = $authCode['code_challenge'] ?? null;
         $hash = $this->verifyChallenge($codeVerifier);

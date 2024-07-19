@@ -21,5 +21,7 @@ class RestOauthPlugin extends RestPlugin
         $container->addShared(\RestApi\Lib\Helpers\CookieHelper::class);// addShared means singleton
         $container->add(\RestOauth\Controller\OauthTokenController::class)
             ->addArguments([\RestApi\Lib\Helpers\CookieHelper::class, \Cake\Http\ServerRequest::class]);
+        $container->add(\RestOauth\Controller\AuthorizeController::class)
+            ->addArguments([\RestApi\Lib\Helpers\CookieHelper::class, \Cake\Http\ServerRequest::class]);
     }
 }
