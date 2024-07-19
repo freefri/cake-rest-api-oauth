@@ -147,6 +147,11 @@ class AuthorizationCodeGrantPkceFlow
         return $toRet;
     }
 
+    public static function verifyChallenge(string $codeVerifier): string
+    {
+        return strtr(rtrim(base64_encode(hash('sha256', $codeVerifier, true)), '='), '+/', '-_');
+    }
+
     public function authorizationCodePkceFlow(array $data): array
     {
         $codeVerifier = $data['code_verifier'] ?? null;
@@ -158,20 +163,20 @@ class AuthorizationCodeGrantPkceFlow
         $authCode = $this->OauthTable->getAuthorizationCode($data['code']);
         $this->OauthTable->expireAuthorizationCode($data['code']);
         if (!$authCode) {
-            throw new BadRequestException('Invalid authorization code ' . $authCode);
+            throw new BadRequestException('Invalid authorization code ' . $data['code']);
         }
-        $hash = hash('sha256', $codeVerifier);
-        $codeChallenge = $authCode['code_challenge'] ?? null;
-        if ($codeChallenge !== $hash) {
+        $storedCodeChallenge = $authCode['code_challenge'] ?? null;
+        $hash = $this->verifyChallenge($codeVerifier);
+        if ($storedCodeChallenge !== $hash) {
             throw new BadRequestException('Code challenge and verifier do not match '
-                . $codeChallenge . ' -> ' . $hash);
+                . $storedCodeChallenge . ' -> ' . $hash);
         }
         $redirectUri = $data['redirect_uri'] ?? '';
         if ($redirectUri !== ($authCode['redirect_uri'] ?? '')) {
             throw new BadRequestException('Redirect uri must be the same');
         }
-        if ($clientId !== $authCode['client_id']) {
-            throw new BadRequestException('Client ID must be the same');
+        if ($clientId != $authCode['client_id']) {
+            throw new BadRequestException('Client ID must be the same ' . $authCode['client_id'] . ' - ' . $clientId);
         }
 
         $token = $this->OauthTable->createBearerToken($authCode['user_id'], $clientId, $this->_secsToExpire($data));

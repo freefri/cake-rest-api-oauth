@@ -121,7 +121,7 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
                 'user_id' => $uid,
                 'redirect_uri' => $data['redirect_uri'],
                 'client_id' => $data['client_id'],
-                'code_challenge' => 'b0e18bba920958598927dd997476f346e0e19d0b50aa1c420b99624c57aa176b',
+                'code_challenge' => 'sOGLupIJWFmJJ92ZdHbzRuDhnQtQqhxCC5liTFeqF2s',
                 'scope' => 'something offline_access else'
             ]);
 
@@ -133,5 +133,12 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
             'refresh_token' => null,
         ];
         $this->assertEquals($expected, $token);
+    }
+
+    public function testVerifyChallenge()
+    {
+        $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow(OauthAccessTokensTable::load());
+        $token = $AuthorizationFlow->verifyChallenge('fjjKuUjyJiDceLmlnk2QQ1BYL.norHWn3nmafdT7N9U');
+        $this->assertEquals('EzqV-PCqN_fBM2jDclj3kaaUWD4egCuYAXYdNcGQl9A', $token);
     }
 }

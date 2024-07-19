@@ -10,6 +10,7 @@ use Cake\Core\Configure;
 use RestApi\Lib\Helpers\CookieHelper;
 use RestApi\Model\Table\OauthAccessTokensTable;
 use RestApi\TestSuite\ApiCommonErrorsTest;
+use RestOauth\Lib\AuthorizationCodeGrantPkceFlow;
 use RestOauth\Lib\LoginChallenge;
 use RestOauth\RestOauthPlugin;
 use RestOauth\Test\Fixture\OauthClientsFixture;
@@ -105,7 +106,7 @@ class OauthTokenControllerTest extends ApiCommonErrorsTest
             'redirect_uri' => self::REDIRECT_URL,
             'scope' => 'offline_access'
         ];
-        $codeChallenge = hash('sha256', $data['code_verifier']);
+        $codeChallenge = AuthorizationCodeGrantPkceFlow::verifyChallenge($data['code_verifier']);
         OauthAccessTokensTable::load()
             ->setAuthorizationCode(
                 $data['code'], $data['client_id'], 50, $data['redirect_uri'],
