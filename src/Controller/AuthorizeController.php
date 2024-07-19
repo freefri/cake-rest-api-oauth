@@ -19,17 +19,12 @@ class AuthorizeController extends ApiController
     protected function getList()
     {
         $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow();
-        $acceptHeader = $this->getRequest()->getHeader('Accept')[0] ?? '';
         $queryParams = [
             'login_challenge' => $AuthorizationFlow->getLoginChallenge($this->getRequest()),
         ];
-        if ($acceptHeader === 'application/json') {
-            $this->return = $queryParams;
-        } else {
-            $path = Configure::read('RestOauthPlugin.idpLoginFormPath', '/idp/login');
-            $redirect = $AuthorizationFlow->buildUrl($this->_getIdpDomain(), $path, $queryParams);
-            $this->redirect($redirect);
-        }
+        $path = Configure::read('RestOauthPlugin.idpLoginFormPath', '/idp/login');
+        $redirect = $AuthorizationFlow->buildUrl($this->_getIdpDomain(), $path, $queryParams);
+        $this->redirect($redirect);
     }
 
     private function _getIdpDomain(): string

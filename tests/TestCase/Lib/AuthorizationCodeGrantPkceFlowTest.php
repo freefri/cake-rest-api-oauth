@@ -5,8 +5,9 @@ declare(strict_types = 1);
 namespace RestOauth\Test\TestCase\Lib;
 
 use App\Model\Table\UsersTable;
+use Cake\Core\Configure;
 use Cake\Http\Response;
-use Cake\Http\ServerRequest;
+use Cake\I18n\FrozenTime;
 use Cake\TestSuite\TestCase;
 use RestApi\Lib\Helpers\CookieHelper;
 use RestApi\Model\Table\OauthAccessTokensTable;
@@ -14,14 +15,14 @@ use RestOauth\Lib\AuthorizationCodeGrantPkceFlow;
 
 class AuthorizationCodeGrantPkceFlowTest extends TestCase
 {
-    public function testLoginWithPassword()
+    private function _loginWithPasswordToArray()
     {
         $data = [
             'username' => 'UsersFixture::EMAIL',
             'password' => 'passpass',
             'client_id' => 'OauthClientsFixture::DASHBOARD_CLI',
             'grant_type' => 'password',
-            'login_challenge' => 'AuthorizeControllerTest::LOGIN_CHALLENGE',
+            'login_challenge' => 'mocked_OauthTokenControllerTest::LOGIN_CHALLENGE',
             'scope' => 'custom_test_scope',
         ];
 
@@ -31,6 +32,7 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
                 'challenge' => hash('sha256', 'mocked_code_verifier'),
                 'redirect' => 'mocked_redirect',
                 'state' => 'mocked_state',
+                'expires' => new FrozenTime('+2minutes'),
             ]);
         $mockUsersTable = $this->getMockBuilder(UsersTable::class)
             ->getMock();
@@ -50,7 +52,26 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
 
         $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow();
         list($response, $token) = $AuthorizationFlow->loginWithPasswordToArray($data, $mockCookieHelper, $response, $mockOauthTable);
+        return $token;
+    }
 
+    public function testLoginWithPassword()
+    {
+        $token = $this->_loginWithPasswordToArray();
+
+        $this->assertEquals(['code', 'redirect_uri', 'state'], array_keys($token));
+        $this->assertEquals('mocked_redirect', $token['redirect_uri']);
+        $this->assertEquals('mocked_state', $token['state']);
+        $this->assertArrayHasKey('code', $token);
+    }
+
+    public function testLoginWithPassword_andReturningAccessToken()
+    {
+        Configure::write('RestOauthPlugin.tokenDirectlyFromPasswordGrant', true);
+        $token = $this->_loginWithPasswordToArray();
+        Configure::write('RestOauthPlugin.tokenDirectlyFromPasswordGrant', false);
+
+        $this->assertEquals(['access_token', 'expires_in', 'code', 'redirect_uri', 'state'], array_keys($token));
         $this->assertEquals('mocked_access_token', $token['access_token']);
         $this->assertEquals('7200', $token['expires_in'], 'expires in seconds');
         $this->assertEquals('mocked_redirect', $token['redirect_uri']);

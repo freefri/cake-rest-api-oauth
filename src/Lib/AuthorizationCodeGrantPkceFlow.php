@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace RestOauth\Lib;
 
+use Cake\Core\Configure;
 use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Exception\UnauthorizedException;
 use Cake\Http\Response;
@@ -45,19 +46,8 @@ class AuthorizationCodeGrantPkceFlow
         if (!$codeChallenge) {
             throw new BadRequestException('Required parameter missing code_challenge');
         }
-        return $this->computeLoginChallenge($codeChallenge, $redirectUri, $state);
-    }
-
-    protected function computeLoginChallenge(string $codeChallenge, string $redirectUri, string $state = null): string
-    {
-        $Cookie = new CookieHelper();
-        $storedValue = [
-            'challenge' => $codeChallenge,
-            'redirect' => $redirectUri,
-            'state' => $state,
-        ];
-        $cookie = $Cookie->writeLoginChallenge($storedValue, 5);
-        return $cookie->read();
+        $loginChallenge = new LoginChallenge($codeChallenge, $redirectUri, $state);
+        return $loginChallenge->computeLoginChallenge();
     }
 
     public function loginWithPasswordToRedirect(
@@ -91,7 +81,7 @@ class AuthorizationCodeGrantPkceFlow
             ];
             throw $e;
         }
-        $challenge = $CookieHelper->decryptLoginChallenge(urldecode($data['login_challenge']));
+        $challenge = LoginChallenge::decrypt($data['login_challenge'], $CookieHelper);
         return [$response, $this->buildUrl($this->_getRedirectUri($challenge['redirect']), '', $params)];
     }
 
@@ -112,7 +102,13 @@ class AuthorizationCodeGrantPkceFlow
         $response = $response->withCookie($cookie);
         $authorizationCode = $this->getAuthorizationCode(
             $data, $CookieHelper, $OauthTable, $usr->id);
-        return [$response, array_merge($token, $authorizationCode)];
+        if (Configure::read('RestOauthPlugin.tokenDirectlyFromPasswordGrant')) {
+            // it is insecure to return the auth $token directly here (only the $authorizationCode)
+            $toRet = array_merge($token, $authorizationCode);
+        } else {
+            $toRet = $authorizationCode;
+        }
+        return [$response, $toRet];
     }
 
     protected function _secsToExpire($data)
@@ -138,7 +134,7 @@ class AuthorizationCodeGrantPkceFlow
         $codeChallenge = null;
         $state = null;
         if ($data['login_challenge'] ?? null) {
-            $challenge = $CookieHelper->decryptLoginChallenge(urldecode($data['login_challenge']));
+            $challenge = LoginChallenge::decrypt($data['login_challenge'], $CookieHelper);
             $redirectUri = $challenge['redirect'];
             $state = $challenge['state'] ?? null;
             $codeChallenge = $challenge['challenge'];
@@ -168,6 +164,7 @@ class AuthorizationCodeGrantPkceFlow
             throw new BadRequestException('Mandatory param is missing');
         }
         $authCode = $OauthTable->getAuthorizationCode($data['code']);
+        $OauthTable->expireAuthorizationCode($data['code']);
         if (!$authCode) {
             throw new BadRequestException('Invalid authorization code ' . $authCode);
         }

@@ -6,9 +6,11 @@ namespace RestOauth\Test\TestCase\Controller;
 
 use App\Model\Table\UsersTable;
 use App\Test\Fixture\UsersFixture;
+use Cake\Core\Configure;
 use RestApi\Lib\Helpers\CookieHelper;
 use RestApi\Model\Table\OauthAccessTokensTable;
 use RestApi\TestSuite\ApiCommonErrorsTest;
+use RestOauth\Lib\LoginChallenge;
 use RestOauth\RestOauthPlugin;
 use RestOauth\Test\Fixture\OauthClientsFixture;
 
@@ -34,24 +36,24 @@ class OauthTokenControllerTest extends ApiCommonErrorsTest
 
     public function testAddNew_login()
     {
+        $uri = 'https://domain.com/optional/URL/to/which/Auth0/will/redirect/the/browser/after/authorization/has/been/granted';
+        $challenge = new LoginChallenge('the_code_challenge', $uri, 'recommended_param_to_avoid_csrf');
         $data = [
             'username' => UsersFixture::USER_ADMIN_EMAIL,
             'password' => 'passpass',
             'client_id' => OauthClientsFixture::DASHBOARD_CLI,
             'grant_type' => 'password',
-            'login_challenge' => AuthorizeControllerTest::LOGIN_CHALLENGE,
+            'login_challenge' => $challenge->computeLoginChallenge(),
         ];
 
+        $this->configRequest(['headers' => ['Accept' => 'application/json']]);
         $this->post($this->_getEndpoint(), $data);
 
         $return = $this->assertJsonResponseOK()['data'];
 
-        $this->assertArrayHasKey('code', $return);
+        $this->assertEquals(['code', 'redirect_uri', 'state'], array_keys($return));
         $this->assertEquals(self::REDIRECT_URL, $return['redirect_uri']);
         $this->assertEquals('recommended_param_to_avoid_csrf', $return['state']);
-        $this->assertArrayHasKey('access_token', $return);
-        $this->assertEquals('7206', $return['expires_in'], 'expires in seconds');
-        $this->assertEquals('Bearer', $return['token_type']);
     }
 
     public function testAddNew_loginShouldRememberMe()
@@ -64,13 +66,15 @@ class OauthTokenControllerTest extends ApiCommonErrorsTest
             'remember_me' => true,
         ];
 
+        Configure::write('RestOauthPlugin.tokenDirectlyFromPasswordGrant', true);
         $this->configRequest(['headers' => ['Accept' => 'application/json']]);
         $this->post($this->_getEndpoint(), $data);
+        Configure::write('RestOauthPlugin.tokenDirectlyFromPasswordGrant', false);
 
         $this->assertJsonResponseOK();
         $return = json_decode($this->_getBodyAsString(), true)['data'];
 
-        $this->assertArrayHasKey('access_token', $return);
+        $this->assertEquals(['access_token', 'expires_in', 'token_type', 'scope', 'code', 'redirect_uri'], array_keys($return));
         $this->assertEquals('172806', $return['expires_in'], 'expires in seconds');
         $this->assertEquals('Bearer', $return['token_type']);
     }

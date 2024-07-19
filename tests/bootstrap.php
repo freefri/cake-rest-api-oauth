@@ -55,6 +55,11 @@ Configure::write('App', [
 Configure::write('Session', [
     'defaults' => 'php',
 ]);
+Configure::write('RestOauthPlugin', [
+    'idpDomain' => 'https://idp.example.com',
+    'idpLoginFormPath' => '/path/login',
+    'tokenDirectlyFromPasswordGrant' => false,
+]);
 Configure::write('Error', [
     'errorLevel' => E_ALL,
     'exceptionRenderer' => \RestApi\Lib\Error\ExceptionRenderer::class,

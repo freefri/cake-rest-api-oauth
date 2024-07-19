@@ -5,8 +5,6 @@ declare(strict_types = 1);
 namespace RestOauth\Controller;
 
 use App\Controller\ApiController;
-use App\Controller\Component\OAuthServerComponent;
-use App\Model\Table\UsersTable;
 use Cake\Controller\ComponentRegistry;
 use Cake\Event\EventManagerInterface;
 use Cake\Http\Exception\BadRequestException;
@@ -17,8 +15,6 @@ use RestApi\Model\Table\OauthAccessTokensTable;
 use RestOauth\Lib\AuthorizationCodeGrantPkceFlow;
 
 /**
- * @property UsersTable $Users
- * @property OAuthServerComponent $OAuthServer
  * @property OauthAccessTokensTable $OauthAccessTokens
  */
 class OauthTokenController extends ApiController
@@ -40,7 +36,6 @@ class OauthTokenController extends ApiController
     public function initialize(): void
     {
         parent::initialize();
-        $this->Users = UsersTable::load();
         $this->OauthAccessTokens = OauthAccessTokensTable::load();
     }
 

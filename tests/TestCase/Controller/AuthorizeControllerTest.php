@@ -12,7 +12,6 @@ use RestOauth\Test\Fixture\OauthClientsFixture;
 
 class AuthorizeControllerTest extends ApiCommonErrorsTest
 {
-    public const LOGIN_CHALLENGE = 'p9KKxVOc1/62tTZ8ROlc0A8SclFgIp0zadlqMvhI5/L4+kSS0auORU0eHzgW7SoJtUv46tYoR7gcSQ6mJETbr8U34Ivdn4iX4j9glBwWsH5nIaCtvHieBEeWpAdUg/YDxj/bYV/O/QL0X9E/rtT5JV7rP09g3izjAj9nDc5bls6V8l0nf8KMfZvhmGsM9JSjYODh7qVW10fBKHgVEslzmh9dd6TdJV9Rp6Uphcoy6R3j3VhKA0nFzqpmAoSx1js0nufSXpBtmwguSjNgUHT3k+lV5IXt7yvcgH3/LqS+Uq0=';
     protected $fixtures = [
         UsersFixture::LOAD,
         OauthClientsFixture::LOAD,
@@ -45,8 +44,7 @@ class AuthorizeControllerTest extends ApiCommonErrorsTest
         $params = http_build_query($params);
         $this->get($this->_getEndpoint() . '?' . $params);
 
-        $decoded = $this->assertJsonResponseOK();
-        $expected = ['login_challenge' => AuthorizeControllerTest::LOGIN_CHALLENGE];
-        $this->assertEquals($expected, $decoded['data']);
+        $url = 'https://idp.example.com/path/login?login_challenge=akxUSHRqTEdJcm5oNllRVEI4TUMrSTFPaUNodGh4ajZLbnEydGJQSEVsYUk3eDcxY2NlT2xyVzZhMkxlNX';
+        $this->assertRedirectContains($url);
     }
 }
