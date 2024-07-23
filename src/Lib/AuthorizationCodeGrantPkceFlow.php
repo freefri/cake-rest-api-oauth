@@ -100,7 +100,7 @@ class AuthorizationCodeGrantPkceFlow
             ->writeApi2Remember($token['access_token'], $token['expires_in']);
         $response = $response->withCookie($cookie);
         $authorizationCode = $this->getAuthorizationCode($data, $CookieHelper, $usr->id);
-        if (Configure::read('RestOauthPlugin.tokenDirectlyFromPasswordGrant')) {
+        if (Configure::read('RestOauthPlugin.tokenDirectlyFromPasswordGrant') && !isset($data['login_challenge'])) {
             // it is insecure to return the auth $token directly here (only the $authorizationCode)
             $toRet = array_merge($token, $authorizationCode);
         } else {
