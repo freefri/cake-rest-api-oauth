@@ -106,8 +106,10 @@ class OauthTokenControllerTest extends ApiCommonErrorsTest
             'redirect_uri' => self::REDIRECT_URL,
             'scope' => 'offline_access'
         ];
-        $codeChallenge = AuthorizationCodeGrantPkceFlow::verifyChallenge($data['code_verifier']);
-        OauthAccessTokensTable::load()
+        $OauthAccessTokensTable = OauthAccessTokensTable::load();
+        $flow = new AuthorizationCodeGrantPkceFlow($OauthAccessTokensTable);
+        $codeChallenge = $flow->verifyChallenge($data['code_verifier']);
+        $OauthAccessTokensTable
             ->setAuthorizationCode(
                 $data['code'], $data['client_id'], 50, $data['redirect_uri'],
                 time() + 30, 'something offline_access', null, $codeChallenge);
