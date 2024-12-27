@@ -59,6 +59,10 @@ Configure::write('RestOauthPlugin', [
     'idpDomain' => 'https://idp.example.com',
     'idpLoginFormPath' => '/path/login',
     'tokenDirectlyFromPasswordGrant' => false,
+    'externalOauth' => [
+        'loginUrl' => 'https://eu-central-1qlggwpudy.auth.eu-central-1.amazoncognito.com/login',
+        'clientId' => 'cognito_client_id',
+    ]
 ]);
 Configure::write('Error', [
     'errorLevel' => E_ALL,

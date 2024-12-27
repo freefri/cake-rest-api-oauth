@@ -48,6 +48,11 @@ class AuthorizeController extends ApiController
 
     protected function getList()
     {
+        $redirectUrl = $this->_getExternalRedirect($this->getRequest()->getQueryParams());
+        if ($redirectUrl) {
+            return $this->redirect($redirectUrl);
+        }
+
         $loginChallenge = $this->AuthFlow->getLoginChallenge($this->getRequest());
         $queryParams = [
             'login_challenge' => $loginChallenge,
@@ -58,7 +63,7 @@ class AuthorizeController extends ApiController
             $redirectUri = $queryParams['redirect_uri'] ?? '';
             unset($queryParams['redirect_uri']);
             if ($redirectUri) {
-                $this->redirect($this->AuthFlow->buildUrl($redirectUri, '', $queryParams));
+                return $this->redirect($this->AuthFlow->buildUrl($redirectUri, '', $queryParams));
             } else {
                 throw new NotImplementedException('Login without redirect_uri is not implemented');
             }
@@ -66,7 +71,23 @@ class AuthorizeController extends ApiController
 
         $path = Configure::read('RestOauthPlugin.idpLoginFormPath', '/idp/login');
         $redirect = $this->AuthFlow->buildUrl($this->_getIdpDomain(), $path, $queryParams);
-        $this->redirect($redirect);
+        return $this->redirect($redirect);
+    }
+
+    private function _getExternalRedirect(array $queryParams): ?string
+    {
+        $cognitoClientId = Configure::read('RestOauthPlugin.externalOauth.clientId');
+        $redirectUrl = null;
+        if (($queryParams['client_id'] ?? null) === $cognitoClientId) {
+            foreach ($queryParams as $param => $value) {
+                if (!$value) {
+                    unset($queryParams[$param]);
+                }
+            }
+            $redirectUrl = Configure::read('RestOauthPlugin.externalOauth.loginUrl');
+            $redirectUrl .= '?' . http_build_query($queryParams);
+        }
+        return $redirectUrl;
     }
 
     private function _getIdpDomain(): string
