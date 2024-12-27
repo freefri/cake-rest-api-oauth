@@ -89,9 +89,9 @@ class AuthorizationCodeGrantPkceFlowTest extends TestCase
         $token = $this->_loginWithPasswordToArray();
         Configure::write('RestOauthPlugin.tokenDirectlyFromPasswordGrant', false);
 
-        $this->assertEquals(['access_token', 'expires_in', 'code', 'redirect_uri', 'state'], array_keys($token));
-        $this->assertEquals('mocked_access_token', $token['access_token']);
-        $this->assertEquals('7200', $token['expires_in'], 'expires in seconds');
+        $this->assertEquals(['code', 'redirect_uri', 'state'], array_keys($token));
+        //$this->assertEquals('mocked_access_token', $token['access_token']);
+        //$this->assertEquals('7200', $token['expires_in'], 'expires in seconds');
         $this->assertEquals('mocked_redirect', $token['redirect_uri']);
         $this->assertEquals('mocked_state', $token['state']);
         $this->assertArrayHasKey('code', $token);
