@@ -61,7 +61,10 @@ Configure::write('RestOauthPlugin', [
     'tokenDirectlyFromPasswordGrant' => false,
     'externalOauth' => [
         'loginUrl' => 'https://eu-central-1qlggwpudy.auth.eu-central-1.amazoncognito.com/login',
+        'tokenUrl' => 'https://eu-central-1qlggwpudy.auth.eu-central-1.amazoncognito.com/oauth2/token',
         'clientId' => 'cognito_client_id',
+        // phpcs:ignore
+        'tokenSigningKeyUrl' => 'https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_qlGGwpudY/.well-known/jwks.json',
     ]
 ]);
 Configure::write('Error', [

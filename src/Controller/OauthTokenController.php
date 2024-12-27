@@ -5,7 +5,9 @@ declare(strict_types = 1);
 namespace RestOauth\Controller;
 
 use App\Controller\ApiController;
+use App\Model\Table\UsersTable;
 use Cake\Controller\ComponentRegistry;
+use Cake\Core\Configure;
 use Cake\Event\EventManagerInterface;
 use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Response;
@@ -13,6 +15,7 @@ use Cake\Http\ServerRequest;
 use RestApi\Lib\Helpers\CookieHelper;
 use RestApi\Model\Table\OauthAccessTokensTable;
 use RestOauth\Lib\AuthorizationCodeGrantPkceFlow;
+use RestOauth\Lib\AuthorizationCodeGrantPkceFlowExternal;
 
 /**
  * @property OauthAccessTokensTable $OauthAccessTokens
@@ -46,7 +49,12 @@ class OauthTokenController extends ApiController
 
     protected function addNew($data)
     {
-        $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow($this->OauthAccessTokens);
+        $externalClientId = Configure::read('RestOauthPlugin.externalOauth.clientId');
+        if ($externalClientId && ($data['client_id'] ?? '') == $externalClientId) {
+            $AuthorizationFlow = new AuthorizationCodeGrantPkceFlowExternal($this->OauthAccessTokens, UsersTable::load());
+        } else {
+            $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow($this->OauthAccessTokens);
+        }
         switch ($data['grant_type'] ?? null) {
             case 'password':
                 $this->_logoutCookie();
