@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace RestOauth\Test\TestCase\Lib;
 
 use App\Model\Table\UsersTable;
+use Cake\Core\Configure;
 use Cake\TestSuite\TestCase;
 use RestApi\Model\Table\OauthAccessTokensTable;
 use RestOauth\Lib\AuthorizationCodeGrantPkceFlowExternal;
@@ -15,6 +16,22 @@ class AuthorizationCodeGrantPkceFlowExternalTest extends TestCase
     protected $fixtures = [
         OauthClientsFixture::LOAD,
     ];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $tokenUrl = 'https://eu-central-1qlggwpudy.auth.eu-central-1.amazoncognito.com/oauth2/token';
+        Configure::write('RestOauthPlugin.externalOauth.tokenUrl', $tokenUrl);
+        $tokenSigningKeyUrl = 'https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_qlGGwpudY/.well-known/jwks.json';
+        Configure::write('RestOauthPlugin.externalOauth.tokenSigningKeyUrl', $tokenSigningKeyUrl);
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        Configure::delete('RestOauthPlugin.externalOauth.tokenUrl');
+        Configure::delete('RestOauthPlugin.externalOauth.tokenSigningKeyUrl');
+    }
 
     public function testAuthorizationCodePkceFlow_withExternalOauth()
     {
