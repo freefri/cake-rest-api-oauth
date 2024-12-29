@@ -7,6 +7,7 @@ namespace RestOauth\Lib;
 use App\Model\Table\UsersTable;
 use Cake\Core\Configure;
 use Cake\Http\Client;
+use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Exception\InternalErrorException;
 use \Firebase\JWT;
 use RestApi\Model\Table\OauthAccessTokensTable;
@@ -45,7 +46,20 @@ class AuthorizationCodeGrantPkceFlowExternal
         if ($usr->isNew()) {
             $usr = $this->UsersTable->saveOrFail($usr);
         }
-        return $this->OauthTable->createBearerToken($usr->id, $queryParams['client_id'], $externalToken['expires_in']);
+        $queryClientId = $queryParams['client_id'];
+        $externalClientId = Configure::read('RestOauthPlugin.externalOauth.clientId');
+        if ($queryClientId == $externalClientId) {
+            throw new InternalErrorException('Invalid oauth client ID');
+        }
+
+        try {
+            return $this->OauthTable->createBearerToken($usr->id, $queryClientId, $externalToken['expires_in']);
+        } catch (BadRequestException $e) {
+            $entity = $this->OauthTable->OauthClients->newEmptyEntity();
+            $entity->client_id = $queryClientId;
+            $this->OauthTable->OauthClients->saveOrFail($entity);
+            return $this->OauthTable->createBearerToken($usr->id, $queryClientId, $externalToken['expires_in']);
+        }
     }
 
     public function authorizationCodePkceFlow(array $data): array

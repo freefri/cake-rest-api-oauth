@@ -51,8 +51,14 @@ class OauthTokenController extends ApiController
     {
         $externalClientId = Configure::read('RestOauthPlugin.externalOauth.clientId');
         if ($externalClientId && ($data['client_id'] ?? '') == $externalClientId) {
-            $AuthorizationFlow = new AuthorizationCodeGrantPkceFlowExternal($this->OauthAccessTokens, UsersTable::load());
+            /** @var UsersTable $usersTable */
+            $usersTable = UsersTable::load();
+            $AuthorizationFlow = new AuthorizationCodeGrantPkceFlowExternal($this->OauthAccessTokens, $usersTable);
         } else {
+            $skipInternalLogin = Configure::read('RestOauthPlugin.skipInternalLogin');
+            if ($skipInternalLogin) {
+                throw new BadRequestException('Internal login is not enabled');
+            }
             $AuthorizationFlow = new AuthorizationCodeGrantPkceFlow($this->OauthAccessTokens);
         }
         switch ($data['grant_type'] ?? null) {
