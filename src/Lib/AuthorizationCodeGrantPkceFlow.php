@@ -181,7 +181,7 @@ class AuthorizationCodeGrantPkceFlow
 
         $token = $this->OauthTable->createBearerToken($authCode['user_id'], $clientId, $this->_secsToExpire($data));
         $this->OauthTable->expireAuthorizationCode($data['code']);
-        if (str_contains($authCode['scope'] ?? null, 'offline_access')) {
+        if (str_contains($authCode['scope'] ?? '', 'offline_access')) {
             $token['refresh_token'] = null;
         }
         return $token;
