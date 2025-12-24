@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d1acdaa1eaf8bea0515c94aa9dc312d0",
+    "content-hash": "5278548be7d813e3089f49a9272ab5b0",
     "packages": [
         {
             "name": "bshaffer/oauth2-server-php",
