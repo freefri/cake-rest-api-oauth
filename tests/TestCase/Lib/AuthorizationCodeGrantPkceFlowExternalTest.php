@@ -13,7 +13,7 @@ use RestOauth\Test\Fixture\OauthClientsFixture;
 
 class AuthorizationCodeGrantPkceFlowExternalTest extends TestCase
 {
-    protected $fixtures = [
+    protected array $fixtures = [
         OauthClientsFixture::LOAD,
     ];
 

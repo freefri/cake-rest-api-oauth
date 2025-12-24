@@ -26,21 +26,21 @@
     "source": "https://github.com/freefri/cake-rest-api-oauth"
   },
   "require": {
-    "php": ">=7.4 || >=8.2",
+    "php": ">=8.2",
     "ext-mbstring": "*",
     "ext-json": "*",
-    "cakephp/cakephp": "^4.4 || ^5.2.5",
-    "cakephp/migrations": "^3.2 || ^4.6",
+    "cakephp/cakephp": "^5.2.5",
+    "cakephp/migrations": "^4.6",
     "firebase/php-jwt": "5.*",
-    "freefri/cake-rest-api": "^0.5.23 || ^0.7.15",
-    "eduplex-api/cake-api-swagger": "^0.1.4 || ^0.3",
+    "freefri/cake-rest-api": "^0.7.15",
+    "eduplex-api/cake-api-swagger": "^0.3",
     "bshaffer/oauth2-server-php": "~1.14",
     "composer/composer": "^2.0"
   },
   "require-dev": {
     "cakephp/cakephp-codesniffer": "4.*",
-    "freefri/cake-rest-api-fake-app": "^0.1.6",
-    "phpunit/phpunit": "~8.5.0 || ^9.3 || ^10.1"
+    "freefri/cake-rest-api-fake-app": "^0.3.3",
+    "phpunit/phpunit": "^9.3 || ^10.1"
   },
   "suggest": {
     "phpstan/phpstan": "PHPStan focuses on finding errors in your code without actually running it. It catches whole classes of bugs even before you write tests for the code."

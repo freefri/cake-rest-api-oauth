@@ -12,7 +12,7 @@ use RestOauth\Test\Fixture\OauthClientsFixture;
 
 class AuthorizeControllerTest extends ApiCommonErrorsTest
 {
-    protected $fixtures = [
+    protected array $fixtures = [
         UsersFixture::LOAD,
         OauthClientsFixture::LOAD,
     ];
