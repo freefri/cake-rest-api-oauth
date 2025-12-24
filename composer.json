@@ -30,7 +30,7 @@
     "ext-mbstring": "*",
     "ext-json": "*",
     "cakephp/cakephp": "^4.4 || ^5.2.5",
-    "cakephp/migrations": "^3.2",
+    "cakephp/migrations": "^3.2 || ^4.6",
     "firebase/php-jwt": "5.*",
     "freefri/cake-rest-api": "^0.5.23 || ^0.7.15",
     "eduplex-api/cake-api-swagger": "^0.1.4",
