@@ -17,12 +17,10 @@ use RestApi\Model\Table\OauthAccessTokensTable;
 use RestOauth\Lib\AuthorizationCodeGrantPkceFlow;
 use RestOauth\Lib\AuthorizationCodeGrantPkceFlowExternal;
 
-/**
- * @property OauthAccessTokensTable $OauthAccessTokens
- */
 class OauthTokenController extends ApiController
 {
     public CookieHelper $CookieHelper;
+    private OauthAccessTokensTable $OauthAccessTokens;
 
     public function __construct(
         $cookieHelper,
