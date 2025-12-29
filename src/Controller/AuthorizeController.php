@@ -16,12 +16,10 @@ use RestApi\Lib\Helpers\CookieHelper;
 use RestApi\Model\Table\OauthAccessTokensTable;
 use RestOauth\Lib\AuthorizationCodeGrantPkceFlow;
 
-/**
- * @property AuthorizationCodeGrantPkceFlow $AuthFlow
- */
 class AuthorizeController extends ApiController
 {
     public CookieHelper $CookieHelper;
+    private AuthorizationCodeGrantPkceFlow $AuthFlow;
 
     public function isPublicController(): bool
     {
